@@ -85,6 +85,7 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 					'member_extra_fee_option_cost' => 0,
 					'member_extra_fee_option_taxable' => false,
 					'member_extra_fee_option_group_id' => null,
+					'membership_item_id' => null,
 				);
 				$this->saved_fee_options = array();
 
@@ -138,16 +139,24 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 				$member_extra_fee_option_type = get_option('member_extra_fee_option_type') ? get_option('member_extra_fee_option_type') : 'fixed';
 				$member_extra_fee_option_taxable = get_option('member_extra_fee_option_taxable') ? get_option('member_extra_fee_option_taxable') : false;
 				$member_extra_fee_option_group_id = get_option('member_extra_fee_option_group_id') ? get_option('member_extra_fee_option_group_id') : null;
+				$membership_item_id = get_option('membership_item_id') ? get_option('membership_item_id') : null;
 
 				// Get items in user's cart
 				$items = $woocommerce->cart->get_cart();
 
 				$total = 0.0;
+				$has_membership_item = false;
+
 				// For each item in the cart
 				foreach($items as $item => $values){
 					// If the item is not excluded from the fees, use those items in calculation of the total
 					if(!array_shift(wc_get_product_terms($values['product_id'], 'pa_exclude_from_fee', array('fields' => 'names')))){
 						$total += (get_post_meta($values['product_id'] , '_price', true) * $values['quantity']);
+					}
+
+					// If the customer is purchasing a membership item
+					if($values['product_id'] == $membership_item_id){
+						$has_membership_item = true;
 					}
 				}
 
@@ -180,8 +189,8 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 							$user_id
 						));
 
-						// If the user is in the member group
-						if(in_array($member_extra_fee_option_group_id, $user_group)){
+						// If the user is in the member group or they are purchasing a membership item
+						if(in_array($member_extra_fee_option_group_id, $user_group) || $has_membership_item){
 							// Add the member fee
 							$woocommerce->cart->add_fee(__($member_extra_fee_option_label, 'woocommerce'), $member_extra_fee_option_cost, $member_extra_fee_option_taxable);
 						// If the user is not in the member group
@@ -239,6 +248,7 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 					$this->saved_fee_options['member_extra_fee_option_type'] = !isset($_POST['member_extra_fee_option_type']) ? 'fixed' : $_POST['member_extra_fee_option_type'];
 					$this->saved_fee_options['member_extra_fee_option_taxable'] = !isset($_POST['member_extra_fee_option_taxable']) ? false : $_POST['member_extra_fee_option_taxable'];
 					$this->saved_fee_options['member_extra_fee_option_group_id'] = !isset($_POST['member_extra_fee_option_group_id']) ? null : $_POST['member_extra_fee_option_group_id'];
+					$this->saved_fee_options['membership_item_id'] = !isset($_POST['membership_item_id']) ? null : $_POST['membership_item_id'];
 
 					// For all options
 					foreach($this->fee_options as $field => $value)
@@ -268,6 +278,7 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 				$member_extra_fee_option_type = get_option('member_extra_fee_option_type') ? get_option('member_extra_fee_option_type') : 'fixed';
 				$member_extra_fee_option_taxable = get_option('member_extra_fee_option_taxable') ? get_option('member_extra_fee_option_taxable') : false;
 				$member_extra_fee_option_group_id = get_option('member_extra_fee_option_group_id') ? get_option('member_extra_fee_option_group_id') : null;
+				$membership_item_id = get_option('membership_item_id') ? get_option('membership_item_id') : null;
 
 				// Tax options
 				$nonmember_checked_taxable = '';
@@ -363,6 +374,12 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 									<td><?php _e('Group ID', $this->textdomain); ?></td>
 									<td>
 									  <input type="text" id="member_extra_fee_option_group_id" name="member_extra_fee_option_group_id" value="<?php echo $member_extra_fee_option_group_id; ?>" size="10" />
+									</td>
+								  </tr>
+								  <tr>
+									<td><?php _e('Membership Item ID', $this->textdomain); ?></td>
+									<td>
+									  <input type="text" id="membership_item_id" name="membership_item_id" value="<?php echo $membership_item_id; ?>" size="10" />
 									</td>
 								  </tr>
 								</table>
