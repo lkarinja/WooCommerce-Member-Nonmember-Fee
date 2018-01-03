@@ -2,7 +2,7 @@
 /*
 	Plugin Name: WooCommerce Member Nonmember Fee
 	Description: Allows you to add a member and nonmember fee to WooCommerce
-	Version: 1.0.0
+	Version: 1.1.0
 	Author: <a href="http://shop.terrytsang.com">Terry Tsang</a>, <a href="https://github.com/lkarinja">Leejae Karinja</a>
 	License: GPL2
 	License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -139,7 +139,7 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 				$member_extra_fee_option_type = get_option('member_extra_fee_option_type') ? get_option('member_extra_fee_option_type') : 'fixed';
 				$member_extra_fee_option_taxable = get_option('member_extra_fee_option_taxable') ? get_option('member_extra_fee_option_taxable') : false;
 				$member_extra_fee_option_group_id = get_option('member_extra_fee_option_group_id') ? get_option('member_extra_fee_option_group_id') : null;
-				$membership_item_id = get_option('membership_item_id') ? get_option('membership_item_id') : null;
+				$membership_item_id = get_option('membership_item_id') ? preg_split('(,)', get_option('membership_item_id')) : null;
 
 				// Get items in user's cart
 				$items = $woocommerce->cart->get_cart();
@@ -155,7 +155,7 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 					}
 
 					// If the customer is purchasing a membership item
-					if($values['product_id'] == $membership_item_id){
+					if(in_array($values['product_id'], $membership_item_id)){
 						$has_membership_item = true;
 					}
 				}
@@ -377,7 +377,7 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 									</td>
 								  </tr>
 								  <tr>
-									<td><?php _e('Membership Item ID', $this->textdomain); ?></td>
+									<td><?php _e('Membership Item IDs (Separate multiple with commas)', $this->textdomain); ?></td>
 									<td>
 									  <input type="text" id="membership_item_id" name="membership_item_id" value="<?php echo $membership_item_id; ?>" size="10" />
 									</td>
