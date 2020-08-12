@@ -2,15 +2,15 @@
 /*
 	Plugin Name: WooCommerce Member Nonmember Fee
 	Description: Allows you to add a member and nonmember fee to WooCommerce
-	Version: 1.1.0
+	Version: 1.1.1
 	Author: <a href="http://shop.terrytsang.com">Terry Tsang</a>, <a href="https://github.com/lkarinja">Leejae Karinja</a>
 	License: GPL2
 	License URI: https://www.gnu.org/licenses/gpl-2.0.html
 */
 
 /*
-	Copyright 2012-2016 Terry Tsang (email: terrytsang811@gmail.com)
-	Copyright 2017 Leejae Karinja
+	Copyright 2012-2020 Terry Tsang (email: terrytsang811@gmail.com)
+	Copyright 2017-2020 Leejae Karinja
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ if(!defined('ABSPATH')){
 define('wc_plugin_name_member_nonmember_fee', 'WooCommerce Member and Nonmember Fees');
 
 // Define plugin version
-define('wc_version_member_nonmember_fee', '1.0.0');
+define('wc_version_member_nonmember_fee', '1.1.1');
 
 // If WooCommerce plugin is installed and active
 if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_option('active_plugins')))){
@@ -77,15 +77,15 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 				// Options for member and nonmember fees
 				$this->fee_options = array(
 					'nonmember_extra_fee_option_label' => 'Nonmember Fee',
-					'nonmember_extra_fee_option_type' => 'fixed',
-					'nonmember_extra_fee_option_cost' => 0,
+					'nonmember_extra_fee_option_type' => 'percentage',
+					'nonmember_extra_fee_option_cost' => 7,
 					'nonmember_extra_fee_option_taxable' => false,
 					'member_extra_fee_option_label' => 'Member Fee',
-					'member_extra_fee_option_type' => 'fixed',
-					'member_extra_fee_option_cost' => 0,
+					'member_extra_fee_option_type' => 'percentage',
+					'member_extra_fee_option_cost' => 3,
 					'member_extra_fee_option_taxable' => false,
-					'member_extra_fee_option_group_id' => null,
-					'membership_item_id' => null,
+					'member_extra_fee_option_group_id' => 2,
+					'membership_item_id' => preg_split('(,)', '15,5889,5891'),
 				);
 				$this->saved_fee_options = array();
 
@@ -129,17 +129,17 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 
 				// Options for nonmembers
 				$nonmember_extra_fee_option_label = get_option('nonmember_extra_fee_option_label') ? get_option('nonmember_extra_fee_option_label') : 'Nonmember Fee';
-				$nonmember_extra_fee_option_cost = get_option('nonmember_extra_fee_option_cost') ? get_option('nonmember_extra_fee_option_cost') : 0;
-				$nonmember_extra_fee_option_type = get_option('nonmember_extra_fee_option_type') ? get_option('nonmember_extra_fee_option_type') : 'fixed';
+				$nonmember_extra_fee_option_cost = get_option('nonmember_extra_fee_option_cost') ? get_option('nonmember_extra_fee_option_cost') : 7;
+				$nonmember_extra_fee_option_type = get_option('nonmember_extra_fee_option_type') ? get_option('nonmember_extra_fee_option_type') : 'percentage';
 				$nonmember_extra_fee_option_taxable = get_option('nonmember_extra_fee_option_taxable') ? get_option('nonmember_extra_fee_option_taxable') : false;
 
 				// Options for members
 				$member_extra_fee_option_label = get_option('member_extra_fee_option_label') ? get_option('member_extra_fee_option_label') : 'Member Fee';
-				$member_extra_fee_option_cost = get_option('member_extra_fee_option_cost') ? get_option('member_extra_fee_option_cost') : 0;
-				$member_extra_fee_option_type = get_option('member_extra_fee_option_type') ? get_option('member_extra_fee_option_type') : 'fixed';
+				$member_extra_fee_option_cost = get_option('member_extra_fee_option_cost') ? get_option('member_extra_fee_option_cost') : 3;
+				$member_extra_fee_option_type = get_option('member_extra_fee_option_type') ? get_option('member_extra_fee_option_type') : 'percentage';
 				$member_extra_fee_option_taxable = get_option('member_extra_fee_option_taxable') ? get_option('member_extra_fee_option_taxable') : false;
-				$member_extra_fee_option_group_id = get_option('member_extra_fee_option_group_id') ? get_option('member_extra_fee_option_group_id') : null;
-				$membership_item_id = get_option('membership_item_id') ? preg_split('(,)', get_option('membership_item_id')) : null;
+				$member_extra_fee_option_group_id = get_option('member_extra_fee_option_group_id') ? get_option('member_extra_fee_option_group_id') : 2;
+				$membership_item_id = get_option('membership_item_id') ? preg_split('(,)', get_option('membership_item_id')) : preg_split('(,)', '15,5889,5891');
 
 				// Get items in user's cart
 				$items = $woocommerce->cart->get_cart();
@@ -163,7 +163,7 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 				// If the nonmember fee is a percentage
 				if($nonmember_extra_fee_option_type == 'percentage'){
 					// Calculate the nonmember fee based on percent of total cart
-					$nonmember_extra_fee_option_cost = ($nonmember_extra_fee_option_cost / 100) * $total;
+					$nonmember_extra_fee_option_cost = ($nonmember_extra_fee_option_cost / 100.0) * $total;
 				}
 				// Round nonmember fee to 2 decimal places
 				$nonmember_extra_fee_option_cost = round($nonmember_extra_fee_option_cost, 2);
@@ -171,7 +171,7 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 				// If the member fee is a percentage
 				if($member_extra_fee_option_type == 'percentage'){
 					// Calculate the member fee based on percent of total cart
-					$member_extra_fee_option_cost = ($member_extra_fee_option_cost / 100) * $total;
+					$member_extra_fee_option_cost = ($member_extra_fee_option_cost / 100.0) * $total;
 				}
 				// Round member fee to 2 decimal places
 				$member_extra_fee_option_cost = round($member_extra_fee_option_cost, 2);
@@ -198,6 +198,9 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 							// Add the nonmember fee
 							$woocommerce->cart->add_fee(__($nonmember_extra_fee_option_label, 'woocommerce'), $nonmember_extra_fee_option_cost, $nonmember_extra_fee_option_taxable);
 						}
+					}else{
+						// Add the nonmember fee
+						$woocommerce->cart->add_fee(__($nonmember_extra_fee_option_label, 'woocommerce'), $nonmember_extra_fee_option_cost, $nonmember_extra_fee_option_taxable);
 					}
 				// If the user is a guest
 				}else{
@@ -238,17 +241,17 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 
 					// Saved options for nonmember fee
 					$this->saved_fee_options['nonmember_extra_fee_option_label'] = !isset($_POST['nonmember_extra_fee_option_label']) ? 'Nonmember Fee' : $_POST['nonmember_extra_fee_option_label'];
-					$this->saved_fee_options['nonmember_extra_fee_option_cost'] = !isset($_POST['nonmember_extra_fee_option_cost']) ? 0 : $_POST['nonmember_extra_fee_option_cost'];
-					$this->saved_fee_options['nonmember_extra_fee_option_type'] = !isset($_POST['nonmember_extra_fee_option_type']) ? 'fixed' : $_POST['nonmember_extra_fee_option_type'];
+					$this->saved_fee_options['nonmember_extra_fee_option_cost'] = !isset($_POST['nonmember_extra_fee_option_cost']) ? 7 : $_POST['nonmember_extra_fee_option_cost'];
+					$this->saved_fee_options['nonmember_extra_fee_option_type'] = !isset($_POST['nonmember_extra_fee_option_type']) ? 'percentage' : $_POST['nonmember_extra_fee_option_type'];
 					$this->saved_fee_options['nonmember_extra_fee_option_taxable'] = !isset($_POST['nonmember_extra_fee_option_taxable']) ? false : $_POST['nonmember_extra_fee_option_taxable'];
 
 					// Saved options for member fee
 					$this->saved_fee_options['member_extra_fee_option_label'] = !isset($_POST['member_extra_fee_option_label']) ? 'Member Fee' : $_POST['member_extra_fee_option_label'];
-					$this->saved_fee_options['member_extra_fee_option_cost'] = !isset($_POST['member_extra_fee_option_cost']) ? 0 : $_POST['member_extra_fee_option_cost'];
-					$this->saved_fee_options['member_extra_fee_option_type'] = !isset($_POST['member_extra_fee_option_type']) ? 'fixed' : $_POST['member_extra_fee_option_type'];
+					$this->saved_fee_options['member_extra_fee_option_cost'] = !isset($_POST['member_extra_fee_option_cost']) ? 3 : $_POST['member_extra_fee_option_cost'];
+					$this->saved_fee_options['member_extra_fee_option_type'] = !isset($_POST['member_extra_fee_option_type']) ? 'percentage' : $_POST['member_extra_fee_option_type'];
 					$this->saved_fee_options['member_extra_fee_option_taxable'] = !isset($_POST['member_extra_fee_option_taxable']) ? false : $_POST['member_extra_fee_option_taxable'];
-					$this->saved_fee_options['member_extra_fee_option_group_id'] = !isset($_POST['member_extra_fee_option_group_id']) ? null : $_POST['member_extra_fee_option_group_id'];
-					$this->saved_fee_options['membership_item_id'] = !isset($_POST['membership_item_id']) ? null : $_POST['membership_item_id'];
+					$this->saved_fee_options['member_extra_fee_option_group_id'] = !isset($_POST['member_extra_fee_option_group_id']) ? 2 : $_POST['member_extra_fee_option_group_id'];
+					$this->saved_fee_options['membership_item_id'] = !isset($_POST['membership_item_id']) ? preg_split('(,)', '15,5889,5891') : $_POST['membership_item_id'];
 
 					// For all options
 					foreach($this->fee_options as $field => $value)
@@ -268,17 +271,17 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 
 				// Options for nonmembers
 				$nonmember_extra_fee_option_label = get_option('nonmember_extra_fee_option_label') ? get_option('nonmember_extra_fee_option_label') : 'Nonmember Fee';
-				$nonmember_extra_fee_option_cost = get_option('nonmember_extra_fee_option_cost') ? get_option('nonmember_extra_fee_option_cost') : 0;
-				$nonmember_extra_fee_option_type = get_option('nonmember_extra_fee_option_type') ? get_option('nonmember_extra_fee_option_type') : 'fixed';
+				$nonmember_extra_fee_option_cost = get_option('nonmember_extra_fee_option_cost') ? get_option('nonmember_extra_fee_option_cost') : 7;
+				$nonmember_extra_fee_option_type = get_option('nonmember_extra_fee_option_type') ? get_option('nonmember_extra_fee_option_type') : 'percentage';
 				$nonmember_extra_fee_option_taxable = get_option('nonmember_extra_fee_option_taxable') ? get_option('nonmember_extra_fee_option_taxable') : false;
 
 				// Options for members
 				$member_extra_fee_option_label = get_option('member_extra_fee_option_label') ? get_option('member_extra_fee_option_label') : 'Member Fee';
-				$member_extra_fee_option_cost = get_option('member_extra_fee_option_cost') ? get_option('member_extra_fee_option_cost') : 0;
-				$member_extra_fee_option_type = get_option('member_extra_fee_option_type') ? get_option('member_extra_fee_option_type') : 'fixed';
+				$member_extra_fee_option_cost = get_option('member_extra_fee_option_cost') ? get_option('member_extra_fee_option_cost') : 3;
+				$member_extra_fee_option_type = get_option('member_extra_fee_option_type') ? get_option('member_extra_fee_option_type') : 'percentage';
 				$member_extra_fee_option_taxable = get_option('member_extra_fee_option_taxable') ? get_option('member_extra_fee_option_taxable') : false;
-				$member_extra_fee_option_group_id = get_option('member_extra_fee_option_group_id') ? get_option('member_extra_fee_option_group_id') : null;
-				$membership_item_id = get_option('membership_item_id') ? get_option('membership_item_id') : null;
+				$member_extra_fee_option_group_id = get_option('member_extra_fee_option_group_id') ? get_option('member_extra_fee_option_group_id') : 2;
+				$membership_item_id = get_option('membership_item_id') ? get_option('membership_item_id') : preg_split('(,)', '15,5889,5891');
 
 				// Tax options
 				$nonmember_checked_taxable = '';
@@ -403,16 +406,29 @@ if(in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_o
 				<br />
 				<?php
 			}
+
+			/**
+			 * Get the setting options
+			 */
+			function get_options()
+			{
+				foreach($this->fee_options as $field => $value)
+				{
+					$array_options[$field] = get_option($field);
+				}
+
+				return $array_options;
+			}
 		}
 	}
 	$WooCommerce_Member_Nonmember_Fee = new WooCommerce_Member_Nonmember_Fee();
 // If WooCommerce plugin is not installed or active
 }else{
 	add_action('admin_notices', 'wc_member_nonmember_fee_error_notice');
-	function wc_nonmember_extra_fee_option_error_notice(){
+	function wc_member_nonmember_fee_error_notice(){
 		global $current_screen;
 		if($current_screen->parent_base == 'plugins'){
-			echo '<div class="error"><p>'.__(wc_plugin_name_extra_fee_option.' requires <a href="http://www.woothemes.com/woocommerce/" target="_blank">WooCommerce</a> to be activated in order to work. Please install and activate <a href="'.admin_url('plugin-install.php?tab=search&type=term&s=WooCommerce').'" target="_blank">WooCommerce</a> first.').'</p></div>';
+			echo '<div class="error"><p>'.__(wc_plugin_name_member_nonmember_fee.' requires <a href="http://www.woothemes.com/woocommerce/" target="_blank">WooCommerce</a> to be activated in order to work. Please install and activate <a href="'.admin_url('plugin-install.php?tab=search&type=term&s=WooCommerce').'" target="_blank">WooCommerce</a> first.').'</p></div>';
 		}
 	}
 }
